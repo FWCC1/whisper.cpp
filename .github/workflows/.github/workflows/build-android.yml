@@ -1,0 +1,46 @@
+name: Build for Android
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["master"]
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        abi: [arm64-v8a, armeabi-v7a, x86_64]   # Build for 3 Android ABIs
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r25b
+
+      - name: Build for ${{ matrix.abi }}
+        run: |
+          export ANDROID_NDK_HOME=$ANDROID_NDK_LATEST_HOME
+          export PATH=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
+          
+          # Clean before each ABI build
+          make clean || true
+          
+          # Build whisper.cpp targeting the selected ABI
+          ANDROID_ABI=${{ matrix.abi }} make -j
+          
+      - name: List outputs
+        run: ls -R
+
+      - name: Upload binary for ${{ matrix.abi }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: whisper-android-${{ matrix.abi }}
+          path: ./main   # adjust if 'main' gets placed elsewhere

@@ -1,7 +1,7 @@
-name: Build for Android (Multi-ABI)
+name: Build for Android (per-ABI artifacts)
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # allow manual runs
   push:
     branches: ["master"]
 
@@ -11,6 +11,7 @@ jobs:
     strategy:
       matrix:
         abi: [arm64-v8a, armeabi-v7a, x86_64]
+
     steps:
       - uses: actions/checkout@v4
 
@@ -33,13 +34,8 @@ jobs:
           make clean || true
           ANDROID_ABI=${{ matrix.abi }} make -j
 
-          # Collect into ABI-specific folder
-          mkdir -p outputs/${{ matrix.abi }}
-          cp -r build/bin/* outputs/${{ matrix.abi }}/
-
-      - name: Upload Android binaries (combined)
-        if: matrix.abi == 'x86_64'   # last run
+      - name: Upload ${{ matrix.abi }} binaries
         uses: actions/upload-artifact@v4
         with:
-          name: whisper-android-multi-abi
-          path: outputs/
+          name: whisper-android-${{ matrix.abi }}
+          path: build/bin/*

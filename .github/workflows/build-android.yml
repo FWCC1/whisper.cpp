@@ -33,11 +33,12 @@ jobs:
           make clean || true
           ANDROID_ABI=${{ matrix.abi }} make -j
 
+          # Collect into ABI-specific folder
           mkdir -p outputs/${{ matrix.abi }}
-          mv main outputs/${{ matrix.abi }}/main
+          cp -r build/bin/* outputs/${{ matrix.abi }}/
 
       - name: Upload Android binaries (combined)
-        if: matrix.abi == 'x86_64'
+        if: matrix.abi == 'x86_64'   # last run
         uses: actions/upload-artifact@v4
         with:
           name: whisper-android-multi-abi
